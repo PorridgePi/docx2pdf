@@ -84,14 +84,20 @@ function parseArgs([inputPath, outputPath, keepActive, ...rest]) {
     output = { batch: true, inputPath, outputPath, keepActive };
   } else {
     assert(
-      inputPath.endsWith(".docx"),
-      `inputPath is a file, but it does not end with docx. can only convert docx. inputPath: ${inputPath}`
+      inputPath.endsWith(".doc") || inputPath.endsWith(".docx"),
+      `inputPath is a file, but it does not end with doc or docx. can only convert doc or docx. inputPath: ${inputPath}`
     );
     if (outputPath.endsWith(".docx")) {
       outputPath = outputPath.replace(".docx", ".pdf");
+    } else if (outputPath.endsWith(".doc")) {
+      outputPath = outputPath.replace(".doc", ".pdf");
     }
     if (isDir(outputPath)) {
-      outputPath += "/" + basename(inputPath, ".docx") + ".pdf";
+      if (outputPath.endsWith(".docx")) {
+        outputPath += "/" + basename(inputPath, ".docx") + ".pdf";
+      } else if (outputPath.endsWith(".doc")) {
+        outputPath += "/" + basename(inputPath, ".doc") + ".pdf";
+      }
     }
     assert(
       outputPath.endsWith(".pdf"),
@@ -125,13 +131,17 @@ function run(args) {
       .diskItems.name()
       .sort();
     for (file of files) {
-      if (!file.endsWith(".docx")) continue;
+      if (!file.endsWith(".docx") && !file.endsWith(".doc")) continue;
       const filepath = Path(`${args.inputPath}/${file}`);
       console.log(`converting ${filepath}`);
       word.open(filepath);
       const doc = word.activeDocument;
-      const outputFilePath =
-        args.outputPath + "/" + file.replace(".docx", ".pdf");
+      var outputFilePath;
+      if (file.endsWith(".docx")) {
+        outputFilePath= args.outputPath + "/" + file.replace(".docx", ".pdf");
+      } else if (file.endsWith(".doc")) {
+        outputFilePath = args.outputPath + "/" + file.replace(".doc", ".pdf");
+      }
       try {
         doc.saveAs({ fileName: outputFilePath, fileFormat: "format PDF" });
         console.log(
